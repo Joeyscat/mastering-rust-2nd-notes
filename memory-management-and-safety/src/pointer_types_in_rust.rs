@@ -6,7 +6,6 @@ mod tests {
     }
 }
 
-
 #[cfg(test)]
 mod box_basics {
     fn box_ref<T>(b: T) -> Box<T> {
@@ -42,14 +41,13 @@ mod recursive_type {
     }
 }
 
-
 #[cfg(test)]
 mod linked_list {
     use std::rc::Rc;
 
     #[derive(Debug)]
     struct LinkedList<T> {
-        head: Option<Rc<Node<T>>>
+        head: Option<Rc<Node<T>>>,
     }
 
     #[derive(Debug)]
@@ -68,7 +66,7 @@ mod linked_list {
                 head: Some(Rc::new(Node {
                     data,
                     next: self.head.clone(),
-                }))
+                })),
             }
         }
     }
@@ -85,12 +83,12 @@ mod linked_list {
 
 #[cfg(test)]
 mod rc_weak {
-    use std::rc::{Rc, Weak};
     use std::cell::RefCell;
+    use std::rc::{Rc, Weak};
 
     #[derive(Debug)]
     struct LinkedList<T> {
-        head: Option<Rc<LinkedListNode<T>>>
+        head: Option<Rc<LinkedListNode<T>>>,
     }
 
     #[derive(Debug)]
@@ -121,7 +119,7 @@ mod rc_weak {
             }
 
             LinkedList {
-                head: Some(new_node)
+                head: Some(new_node),
             }
         }
     }
@@ -133,4 +131,100 @@ mod rc_weak {
     }
 }
 
+// #[cfg(test)]
+// mod without_cell {
+//     use std::cell::Cell;
+//
+//     #[derive(Debug)]
+//     struct Bag {
+//         item: Box<u32>
+//     }
+//
+//     #[test]
+//     fn test() {
+//         let mut bag = Cell::new(Bag { item: Box::new(1) });
+//         let hand1 = &mut bag;
+//         let hand2 = &mut bag;
+//         *hand1 = Cell::new(Bag { item: Box::new(2) });
+//         *hand2 = Cell::new(Bag { item: Box::new(2) });
+//     }
+// }
 
+#[cfg(test)]
+mod cell {
+    use std::cell::Cell;
+
+    #[derive(Debug)]
+    struct Bag {
+        item: Box<u32>,
+    }
+
+    #[test]
+    fn test() {
+        let bag = Cell::new(Bag { item: Box::new(1) });
+        let hand1 = &bag;
+        let hand2 = &bag;
+        hand1.set(Bag { item: Box::new(2) });
+        hand2.set(Bag { item: Box::new(3) });
+    }
+}
+
+#[cfg(test)]
+mod refcell_basics {
+    use std::cell::RefCell;
+
+    #[derive(Debug)]
+    struct Bag {
+        item: Box<u32>,
+    }
+
+    #[test]
+    fn test() {
+        let bag = RefCell::new(Bag { item: Box::new(1) });
+        let hand1 = &bag;
+        let hand2 = &bag;
+        *hand1.borrow_mut() = Bag { item: Box::new(2) };
+        *hand2.borrow_mut() = Bag { item: Box::new(3) };
+        let borrowed = hand1.borrow();
+        println!("{:?}", borrowed);
+    }
+}
+
+#[cfg(test)]
+mod cell_cache {
+    use std::cell::Cell;
+
+    struct Point {
+        x: u8,
+        y: u8,
+        cached_sum: Cell<Option<u8>>,
+    }
+
+    impl Point {
+        fn sum(&self) -> u8 {
+            match self.cached_sum.get() {
+                Some(sum) => {
+                    println!("Got from cache: {}", sum);
+                    sum
+                }
+                None => {
+                    let new_sum = self.x + self.y;
+                    self.cached_sum.set(Some(new_sum));
+                    println!("Set cache: {}", new_sum);
+                    new_sum
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test() {
+        let p = Point {
+            x: 8,
+            y: 9,
+            cached_sum: Cell::new(None),
+        };
+        println!("Summed result: {}", p.sum());
+        println!("Summed result: {}", p.sum());
+    }
+}
